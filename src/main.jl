@@ -1,6 +1,5 @@
 using Rayden, Scallop, Unitful
 import Unitful: nm, μm, mm, cm, m, km, inch, ft, mi, rad, °
-include("plottingFunctions.jl")
 
 mutable struct RI 
     water
@@ -76,9 +75,4 @@ min_distance = length_conv(min_distance)
 max_distance = length_conv(max_distance)
 
 
-ploteye(ellipsoids, l, opticunits)
-
-# plotpixels(opticunits, l)
-plotfwhm_aperture(opticunits, source_distance, min_aperture, max_aperture)
-# plotfwhm_distance(opticunits, aperture, min_distance, max_distance)
-# plotfwhm_aperture_distance(opticunits, min_aperture, max_aperture, min_distance, max_distance, n_rays = 1000)
+include("plottingFunctions.jl")
