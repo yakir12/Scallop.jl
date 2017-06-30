@@ -13,16 +13,21 @@ immutable Volume
 end
 
 immutable Plane
-    open::Float64
     radii::Vec
     down::Bool # is the dome facing down?
 end
 
-function getmembranes(volumes::Dict{String, Volume}, planes::Dict{String, Plane}, morphz::Float64)
-    morphxy = sqrt(1/morphz)#r^2*h
+getz(x::Float64, rx::Float64, rz::Float64) = rz*sqrt(1 - (x/rx)^2)
+function getcosα(x::Float64, rx::Float64, rz::Float64)
+    X = getz(x, rx, rz)/x
+    return X/sqrt(1 + X^2)
+end
+
+function getmembranes(volumes::Dict{String, Volume}, planes::Dict{String, Plane}, morphz::Float64, aperture::Float64)
+    morphxy = sqrt(1/morphz)
     squeeze = LinearMap(@SMatrix([morphxy 0 0; 0 morphxy 0; 0 0 morphz]))
     z_last = cumsum([-volumes[k].thickness for k in ["water", "cornea", "lens", "lens2distal_retina", "distal_retina2proximal_retina", "gap"]])
-    return Dict(k => Ellipsoid(squeeze(Vec(0, 0, z_last_i - (-1)^planes[k].down*planes[k].radii[3])), squeeze(planes[k].radii), Vec(0, 0, (-1)^planes[k].down), planes[k].open) for (z_last_i, k) in zip(z_last, ["cornea_distal", "lens_distal", "lens_proximal", "distal_retina", "proximal_retina", "mirror"]))
+    return Dict(k => Ellipsoid(squeeze(Vec(0, 0, z_last_i - (-1)^planes[k].down*planes[k].radii[3])), squeeze(planes[k].radii), Vec(0, 0, (-1)^planes[k].down), k == "cornea_distal" ? getcosα(aperture/2, planes[k].radii[1], planes[k].radii[3]) : cospi(.3)) for (z_last_i, k) in zip(z_last, ["cornea_distal", "lens_distal", "lens_proximal", "distal_retina", "proximal_retina", "mirror"]))
 end
 
 

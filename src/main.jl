@@ -1,114 +1,84 @@
-using Rayden, Scallop, Plots
-gr()
+using Rayden, Scallop, Unitful
+import Unitful: nm, μm, mm, cm, m, km, inch, ft, mi, rad, °
+include("plottingFunctions.jl")
 
-volumes = Dict(
-"water"                         => Volume(1.34, 0),
-"cornea"                        => Volume(1.37, 23),
-"lens"                          => Volume(1.42, 215),
-"lens2distal_retina"            => Volume(1.35, 6),
-"distal_retina2proximal_retina" => Volume(1.35, 81),
-"gap"                           => Volume(1.34, 49),
-"behind_mirror"                 => Volume(0.0,  Inf)
-)
-planes = Dict(
-"cornea_distal"   => Plane(cospi(.3), Vec(244, 244, 227), false),
-"lens_distal"     => Plane(cospi(1/3),  Vec(195, 195, 213), false),
-"lens_proximal"   => Plane(cospi(.3), Vec(337, 337, 337), true),
-"distal_retina"   => Plane(cospi(.3), Vec(337, 337, 337), true),
-"proximal_retina" => Plane(cospi(.3), Vec(337, 337, 337), true),
-"mirror"          => Plane(cospi(.3), Vec(337, 337, 337), true)
-)
+mutable struct RI 
+    water
+    cornea
+    lens
+    lens2distal_retina
+    distal_retina2proximal_retina
+    gap
+    behind_mirror
+end
 
-ellipsoids = getmembranes(volumes, planes, 1.04)# 1.157)
+mutable struct Thick
+    water
+    cornea
+    lens
+    lens2distal_retina
+    distal_retina2proximal_retina
+    gap
+    behind_mirror
+end
+
+mutable struct Radii
+    cornea_distal
+    lens_distal
+    lens_proximal
+    distal_retina
+    proximal_retina
+    mirror
+end
+
+length_conv{T <: Number}(x::T) = Float64(ustrip(uconvert(μm, x)))
+angle_conv{T <: Number}(x::T) = Float64(ustrip(uconvert(rad, x)))
+
+function format_radii{T <: Number}(x::Tuple{T})
+    xx1, = x
+    x1 = length_conv(xx1)
+    return Vec(x1, x1, x1)
+end
+function format_radii{T <: Number}(x::Tuple{T, T})
+    xx1, xx2 = x
+    x1 = length_conv(xx1)
+    x2 = length_conv(xx2)
+    return Vec(x1, x1, x2)
+end
+function format_radii{T <: Number}(xx::T) 
+    x = length_conv(xx)
+    return Vec(x, x, x)
+end
+
+ri = RI(zeros(7)...)
+thick = Thick(μm*zeros(7)...)
+radii = Radii(μm*zeros(6)...)
+
+include("variables.jl")
+thick.behind_mirror = Inf*μm
+ri.behind_mirror = 0.0
+thick.water = 0μm
+morphing_factor = Float64(morphing_factor)
+source_distance = length_conv(source_distance)
+
+volumes = Dict(String(k) => Volume(Float64(getfield(ri, k)), length_conv(getfield(thick, k))) for k in fieldnames(ri))
+planes = Dict(String(k) => Plane(format_radii(getfield(radii, k)), !r"distal$"(String(k))) for k in fieldnames(radii))
+aperture = length_conv(aperture)
+morphing_factor = morphing_factor
+
+ellipsoids = getmembranes(volumes, planes, morphing_factor, aperture)
 opticunits = scallop(ellipsoids, volumes)
-aperture = 240.
+l = getLight(source_distance, aperture, ellipsoids["cornea_distal"], angle_conv(source_angle))
 
-l = getLight(1e9, aperture, ellipsoids["cornea_distal"], 0.)
-x, y = coordinates2d(ellipsoids)
-ph = plot(x,y, aspect_ratio = :equal, leg=false, color = :black)
-r = Ray()
-# plot!([-aperture/2, aperture/2], [radius2z_shift(aperture/2, planes["cornea_distal"]), radius2z_shift(aperture/2, planes["cornea_distal"])])#, marker = :circle, line = :red)
-for b in linspace(0, 1, 25), b2 in [0., 0.5]
-    getRay!(r, l, b, b2)
-    x = Float64[]
-    y = Float64[]
-    push!(x, r.orig[1])
-    push!(y, r.orig[3])
-    for i in opticunits
-        raytrace!(r, i)
-        push!(x, r.orig[1])
-        push!(y, r.orig[3])
-        # p = i.body.c + i.body.dir[3]*i.body.r
-        # annotate!(0, p[3], text(i.name, 10, :black, :center))
-    end
-    plot!(x, y, color = :grey)
-end
-plot!(ylims = (-500,100), xlims = (-300,300))
-
-psf = getpsf(opticunits, l, 100000)
-plot(heatmap(collect(psf["distal_retina"][-5:5,-5:5]), aspect_ratio=:equal), heatmap(collect(psf["proximal_retina"][-110:110, -110:110]), aspect_ratio=:equal))
+min_aperture = length_conv(min_aperture)
+max_aperture = length_conv(max_aperture)
+min_distance = length_conv(min_distance)
+max_distance = length_conv(max_distance)
 
 
-l = getLight(1e9, aperture, ellipsoids["cornea_distal"], .05)
-psf = get2dpsf(opticunits, l, 100000)
-plot()
-for (k, v) in psf
-    plot!(collect(v), label = k)
-end
-gui()
+ploteye(ellipsoids, l, opticunits)
 
-
-nt = 20
-thetas = linspace(0, .5, nt)
-ratios = Dict(k => zeros(nt) for k in retinas)
-for (i, θ) in enumerate(thetas)
-    l = getLight(1e9, aperture, ellipsoids["cornea_distal"], θ)
-    psf = get2dpsf(opticunits, l, 100000)
-    for k in keys(ratios)
-        ratios[k][i] = maximum(psf[k])/psf[k][0]
-    end
-end
-plot(ylims = (0,5))
-for (k, v) in ratios
-    plot!(thetas, v, label = k)
-end
-gui()
-
-n = 10
-apertures = linspace(100, 300, 10)
-fwhms = Dict(k => zeros(n) for k in retinas)
-for (i, aperture) in enumerate(apertures), (k, v) in getfwhm(opticunits, 1e9, aperture, 10000, deg2rad(1/4))
-    fwhms[k][i] = get(v)
-end
-plot(ylims = (0,20))
-for (k, v) in fwhms
-    plot!(apertures, v, label = k)
-end
-gui()
-
-aperture = 240.
-n = 10
-viewdistances = logspace(3, 9, 10)
-fwhms = Dict(k => zeros(n) for k in retinas)
-for (i, viewdistance) in enumerate(viewdistances), (k, v) in getfwhm(opticunits, viewdistance, aperture, 10000, deg2rad(1/4))
-    fwhms[k][i] = get(v)
-end
-plot()
-for (k, v) in fwhms
-    plot!(viewdistances, v, label = k)
-end
-plot!(ylims = (0,22), xscale = :log10)
-
-n = 10
-viewdistances = logspace(3, 9, 10)
-apertures = linspace(100, 300, 10)
-fwhms = Dict(k => zeros(n,n) for k in retinas)
-for (i, viewdistance) in enumerate(viewdistances), (j, aperture) in enumerate(apertures), (k, v) in getfwhm(opticunits, viewdistance, aperture, 10000, deg2rad(1/4))
-    fwhms[k][i,j] = get(v)
-end
-
-ph = []
-for (k, v) in fwhms
-    push!(ph, heatmap(apertures, viewdistances, v, label = k))
-end
-plot(ph..., zlims = (0,10))
+# plotpixels(opticunits, l)
+plotfwhm_aperture(opticunits, source_distance, min_aperture, max_aperture)
+# plotfwhm_distance(opticunits, aperture, min_distance, max_distance)
+# plotfwhm_aperture_distance(opticunits, min_aperture, max_aperture, min_distance, max_distance, n_rays = 1000)
