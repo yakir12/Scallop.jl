@@ -4,8 +4,7 @@
 
 [![Coverage Status](https://coveralls.io/repos/yakir12/Scallop.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/yakir12/Scallop.jl?branch=master) [![codecov.io](http://codecov.io/github/yakir12/Scallop.jl/coverage.svg?branch=master)](http://codecov.io/github/yakir12/Scallop.jl?branch=master)
 
-Ray tracing for scallop eyes!
-`Scallop.jl` allows for ray tracing scallop eyes using [`Rayden.jl`](https://github.com/yakir12/Rayden.jl).
+Ray tracing for scallop eyes! `Scallop.jl` functionality relies on [`Rayden.jl`](https://github.com/yakir12/Rayden.jl).
 
 ## How to install
 1. If you haven't already, install [Julia](https://julialang.org/downloads/) -> you should be able to launch it (some icon on the Desktop or some such)
