@@ -3,3 +3,5 @@ CoordinateTransformations
 StaticArrays
 OffsetArrays
 Rotations
+Unitful
+Plots

@@ -2,7 +2,8 @@ using Plots
 plotlyjs()
 
 # function ploteye(ellipsoids::Dict{String,Ellipsoid}, l::Light, opticunits::Vector{OpticUnit}; n_rays::Int = 15)
-function ploteye(n_rays::Int = 15)
+function ploteye(;n_rays::Int = 15)
+    include("main.jl")
     x, y = coordinates2d(ellipsoids)
     plot(x, y, aspect_ratio = :equal, leg=false, color = :black, reuse=false)
     r = Ray()
@@ -27,8 +28,10 @@ function ploteye(n_rays::Int = 15)
     gui()
 end
 
+
 # function plotpixels(opticunits::Vector{OpticUnit}, l::Light; n_rays::Int = 100000)
-function plotpixels(n_rays::Int = 100000)
+function plotpixels(;n_rays::Int = 100000)
+    include("main.jl")
     psf = getpsf(opticunits, l, n_rays)
     ph = []
     for (k, v) in psf
@@ -39,10 +42,11 @@ function plotpixels(n_rays::Int = 100000)
 end
 
 # function plotfwhm_aperture(opticunits::Vector{OpticUnit}, source_distance::Number, min_aperture::Number, max_aperture::Number; n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°)
-function plotfwhm_aperture(n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°)
+function plotfwhm_aperture(;n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°)
+    include("main.jl")
     apertures = linspace(min_aperture, max_aperture, n_data)
     fwhms = Dict(k => zeros(n_data) for k in retinas)
-    for (i, aperture) in enumerate(apertures), (k, v) in getfwhm(opticunits, source_distance, aperture, n_rays, angle_conv(angle_step))
+    for (i, aperture) in enumerate(apertures), (k, v) in getfwhm(opticunits, source_distance, aperture, n_rays, format(angle_step))
         fwhms[k][i] = get(v)
     end
     plot(reuse=false)
@@ -52,10 +56,11 @@ function plotfwhm_aperture(n_data::Int = 10, n_rays::Int = 10000, angle_step = 0
 end
 
 # function plotfwhm_distance(opticunits::Vector{OpticUnit}, aperture::Number, min_distance::Number, max_distance::Number; n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°, u = cm)
-function plotfwhm_distance(n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°, u = cm)
+function plotfwhm_distance(;n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°, u = cm)
+    include("main.jl")
     viewdistances = logspace(log10(min_distance), log10(max_distance), n_data)
     fwhms = Dict(k => zeros(n_data) for k in retinas)
-    for (i, viewdistance) in enumerate(viewdistances), (k, v) in getfwhm(opticunits, viewdistance, aperture, n_rays, angle_conv(angle_step))
+    for (i, viewdistance) in enumerate(viewdistances), (k, v) in getfwhm(opticunits, viewdistance, aperture, n_rays, format(angle_step))
         fwhms[k][i] = get(v)
     end
     plot(xscale = :log10, xlabel = "Source distance ($u)", ylabel = "FWHM (°)", reuse=false)
@@ -64,11 +69,12 @@ function plotfwhm_distance(n_data::Int = 10, n_rays::Int = 10000, angle_step = 0
 end
 
 # function plotfwhm_aperture_distance(opticunits::Vector{OpticUnit}, min_aperture::Number, max_aperture::Number, min_distance::Number, max_distance::Number; n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°)
-function plotfwhm_aperture_distance(n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°)
+function plotfwhm_aperture_distance(;n_data::Int = 10, n_rays::Int = 10000, angle_step = 0.25°)
+    include("main.jl")
     viewdistances = logspace(log10(min_distance), log10(max_distance), n_data)
     apertures = linspace(min_aperture, max_aperture, n_data)
     fwhms = Dict(k => zeros(n_data,n_data) for k in retinas)
-    for (i, viewdistance) in enumerate(viewdistances), (j, aperture) in enumerate(apertures), (k, v) in getfwhm(opticunits, viewdistance, aperture, n_rays, angle_conv(angle_step))
+    for (i, viewdistance) in enumerate(viewdistances), (j, aperture) in enumerate(apertures), (k, v) in getfwhm(opticunits, viewdistance, aperture, n_rays, format(angle_step))
         fwhms[k][i,j] = get(v)
     end
     ph = []
@@ -78,8 +84,6 @@ function plotfwhm_aperture_distance(n_data::Int = 10, n_rays::Int = 10000, angle
     plot(ph..., yscale = :log10, zlims = (0,20), reuse=false)
     gui()
 end
-
-
 
 #=l = getLight(1e9, aperture, ellipsoids["cornea_distal"], .05)
 psf = get2dpsf(opticunits, l, 100000)

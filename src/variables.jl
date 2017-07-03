@@ -1,6 +1,6 @@
 # Light properties
 source_distance = 1m
-source_angle    = 0°
+source_angle    = 17°
 
 # Eye morphology
 aperture        = 251μm
