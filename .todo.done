@@ -1,3 +1,4 @@
+make some tests and see that it builds on the other architechtures somehow | id:0be399a28028d9f07c8244f8b2592868a0807436
 remove the units thng from the optional argument | id:6694692baf612c031adf3e9a4c39c0df30feb606
 add the dependencies | id:9d090e5f5d8af05ae60306ac0d8849e9150f6bf9
 fix the gitignore | id:b09a3a618b4033b6ce7c89ad6087cafcf212fec6
