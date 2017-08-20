@@ -121,7 +121,7 @@ volumes = Dict(String(k) => Volume(Float64(getfield(ri, k)), format(getfield(thi
 planes = Dict(String(k) => Plane(format_radii(getfield(radii, k)), !r"distal$"(String(k))) for k in fieldnames(radii))
 aperture = format(aperture)
 
-ellipsoids = getmembranes(volumes, planes, morphing_factor, aperture)
+aperture, ellipsoids = getmembranes(volumes, planes, morphing_factor, aperture)
 opticunits = scallop(ellipsoids, volumes)
 l = getLight(source_distance, aperture, ellipsoids["cornea_distal"], format(source_angle))
 

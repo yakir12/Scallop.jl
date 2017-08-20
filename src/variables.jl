@@ -1,10 +1,10 @@
 # Light properties
 source_distance = 1m
-source_angle    = 17°
+source_angle    = 0°
 
 # Eye morphology
 aperture        = 251μm
-morphing_factor = 1.12
+morphing_factor = 1.0
 
 ## Volumes
 ### Refractive indices
@@ -39,3 +39,5 @@ min_aperture = 100μm
 max_aperture = 300μm
 min_distance = 1cm
 max_distance = 1m
+min_morph = .5
+max_morph = 2.
