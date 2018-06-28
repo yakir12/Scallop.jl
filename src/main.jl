@@ -92,18 +92,18 @@ thick.behind_mirror = Inf*μm
 ri.behind_mirror = 0.0
 thick.water = 0μm
 
-function format_radii{T <: Number}(x::Tuple{T})
+function format_radii(x::Tuple{T}) where T <: Number
     xx1, = x
     x1 = format(xx1)
     return Vec(x1, x1, x1)
 end
-function format_radii{T <: Number}(x::Tuple{T, T})
+function format_radii(x::Tuple{T, T}) where T <: Number
     xx1, xx2 = x
     x1 = format(xx1)
     x2 = format(xx2)
     return Vec(x1, x1, x2)
 end
-function format_radii{T <: Number}(xx::T) 
+function format_radii(xx::T) where T <: Number 
     x = format(xx)
     return Vec(x, x, x)
 end
