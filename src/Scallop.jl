@@ -8,12 +8,12 @@ export Volume, Plane, getmembranes, scallop, Light, Near, Far, getLight, getRay!
 const retinas = ["proximal_retina", "distal_retina"]
 const retinai = Dict(k => i for (i, k) in enumerate(retinas))
 
-immutable Volume
+struct Volume
     ri::Float64
     thickness::Float64
 end
 
-immutable Plane
+struct Plane
     radii::Vec
     down::Bool # is the dome facing down?
 end
@@ -40,13 +40,13 @@ end
 
 abstract type Light end
 
-immutable Near <: Light
+struct Near <: Light
     cosa::Float64
     orig::Vec
     rotm::LinearMap{RotY{Float64}}
 end
 
-immutable Far <: Light
+struct Far <: Light
     R::Float64
     z::Float64
     dir::Vec
@@ -95,7 +95,7 @@ function getRay!(r::Ray, l::Far, b1::Float64, b2::Float64)
     r.dir = l.dir
 end
 
-function getRay{T <: Light}(l::T, b1::Float64, b2::Float64)
+function getRay(l::T, b1::Float64, b2::Float64) where T <: Light
     r = Ray()
     getRay!(r, l, b1, b2)
     return r
@@ -108,7 +108,7 @@ end
     ray.dir = l.dir
 end=#
 
-function getpsf{L <: Light}(ous::Vector{OpticUnit}, l::L, n::Int)
+function getpsf(ous::Vector{OpticUnit}, l::L, n::Int) where L <: Light
     psf = Dict{String, OffsetArray{Int, 2, Matrix{Int}}}()
     for k in retinas
         i = findfirst(x -> x.name == k, ous)
@@ -139,7 +139,7 @@ function getpsf{L <: Light}(ous::Vector{OpticUnit}, l::L, n::Int)
     return psf
 end
 
-function get2dpsf{L <: Light}(ous::Vector{OpticUnit}, l::L, n::Int)
+function get2dpsf(ous::Vector{OpticUnit}, l::L, n::Int) where L <: Light
     psf = Dict{String, OffsetArray{Int,1,Array{Int,1}}}()
     for k in retinas
         i = findfirst(x -> x.name == k, ous)
@@ -189,7 +189,7 @@ end
     return Dict(k => get(v) for (k,v) in θ)
 end=#
 
-function centerpixel{L <: Light}(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::Float64, r::Ray, v::Vector{Float64})
+function centerpixel(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::Float64, r::Ray, v::Vector{Float64}) where L <: Light
     v[1] = 0.0
     getRay!(r, l, θ, ψ)
     for ou in ous
@@ -203,7 +203,7 @@ function centerpixel{L <: Light}(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::
     return v
 end
 
-function shortest_distance2OA{L <: Light}(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::Float64, r::Ray)
+function shortest_distance2OA(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::Float64, r::Ray) where L <: Light
     v = Inf
     getRay!(r, l, θ, ψ)
     for ou in ous
@@ -218,7 +218,7 @@ function shortest_distance2OA{L <: Light}(ous::Vector{OpticUnit}, l::L, θ::Floa
     return sqrt(v)
 end
 
-function centerpixel{L <: Light}(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::Float64, r::Ray)
+function centerpixel(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::Float64, r::Ray) where L <: Light
     v = 0.0
     getRay!(r, l, θ, ψ)
     for ou in ous
@@ -233,7 +233,7 @@ function centerpixel{L <: Light}(ous::Vector{OpticUnit}, l::L, θ::Float64, ψ::
 end
 
 
-function sumcenterpixel{L <: Light}(ous::Vector{OpticUnit}, l::L)
+function sumcenterpixel(ous::Vector{OpticUnit}, l::L) where L <: Light
     r = Ray()
     # val,err = hcubature(x -> centerpixel(ous, l, x[1], x[2], r), [0.,0.], [1.,1.], abstol = 1e-5)
     val,_ = divonne((x, y) -> centerpixel(ous, l, x[1], x[2], r, y), 2, 1, abstol = 1e-5)
